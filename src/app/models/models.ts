@@ -3,21 +3,53 @@ export interface IUser {
   name: string;
   username: string;
   email: string;
-  address: {
-    street: string;
-    suite: string;
-    city: string;
-    zipcode: string;
-    geo: {
-        lat: string;
-        lng: string;
-    };
-  };
-  phone: string;
-  website: string;
-  company: {
+  phone?: string;
+  website?: string;
+  company?: {
     name: string;
     catchPhrase: string;
     bs: string;
   };
+  address?: {
+    street: string;
+    suite: string;
+    city: string;
+    zipcode: string;
+    geo?: {
+      lat: string;
+      lng: string;
+    };
+  };
+  createdAt?: Date,
+  updatedAt?: Date
+}
+
+export type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
+
+export type DeepPartialIUser = DeepPartial<IUser>;
+
+export const userPattern = {
+  id: 0,
+  name: '',
+  username: '',
+  email: '',
+  phone: '',
+  website: '',
+  company: {
+    name: '',
+    catchPhrase: '',
+    bs: ''
+  },
+  address: {
+    street: '',
+    suite: '',
+    city: '',
+    zipcode: '',
+    geo: {
+        lat: '',
+        lng: ''
+    }
+  }
 }

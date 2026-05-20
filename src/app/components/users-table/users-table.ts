@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
@@ -14,10 +14,11 @@ import { IUser } from '../../models/models';
     NzTableModule
   ],
   template: `
-    <nz-table 
-      #basicTable 
+    <nz-table
+      #basicTable
       [nzData]="users"
       [nzShowPagination]="false"
+      *ngIf="users.length > 0"
     >
       <thead>
         <tr>
@@ -34,13 +35,13 @@ import { IUser } from '../../models/models';
           [routerLink]="['/user-details', user.id]" 
           style="cursor: pointer;"
         >
-          <td>{{user.id}}</td>
+          <td>{{user.id}}</td> <!-- Поле для user обязательно -->
           <td>
-            <strong>{{user.name}}</strong><br/>
-            <small>@{{user.username}}</small>
+            <strong>{{user.name}}</strong><br/> <!-- Поле для user обязательно -->
+            <small>@{{user.username}}</small> <!-- Поле для user обязательно -->
           </td>
           <td>
-            <a>{{user.email || 'Не указан'}}</a>
+            <a>{{user.email}}</a> <!-- Поле для user обязательно -->
           </td>
           <td>{{user.phone || 'Телефон не указан'}}</td>
           <td>{{user.company && user.company.name || 'Название компании не указано'}}</td>
@@ -50,16 +51,6 @@ import { IUser } from '../../models/models';
   `,
   styles: ``
 })
-export class UsersTableComponent implements OnInit, OnChanges {
+export class UsersTableComponent {
   @Input() users: IUser[] = [];
-
-  ngOnInit() {
-    console.log('On Init: ', this.users)
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    // console.log('Предыдущее значение: ', changes['users'].previousValue);
-    // console.log('Текущее значение: ', changes['users'].currentValue);
-    // console.log('Первое изменение: ', changes['users'].firstChange);
-  }
 }

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
-import { Observable, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { catchError, map, retry, timeout } from 'rxjs/operators';
 
 import { DeepPartialIUser, IUser } from '../models/models';
@@ -21,7 +21,8 @@ export class UserService {
   private readonly maxRetries = 2;
 
   getAllUsersAPI(): Observable<IUser[]> {
-    return this.http.get<IUser[]>(this.apiUrl).pipe(
+    return this.http.get<IUser[]>(this.apiUrl)
+    .pipe(
       timeout(this.defaultTimeout),
       retry(this.maxRetries),
       map(users => this.transformUsers(users)),
@@ -70,7 +71,7 @@ export class UserService {
     return users.find(user => user.id === id) || null;
   }
 
-  createUser(userData: IUser): IUser { // Доработать
+  createUser(userData: IUser): IUser {
     const users = this.getAllUsers();
 
     const newId = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;

@@ -1,12 +1,17 @@
-import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChange, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IUser } from '../../models/models';
+
 import { debounceTime, distinctUntilChanged, Subject, takeUntil } from 'rxjs';
+
+import { IUser } from '../../models/models';
 
 @Component({
   selector: 'users-filter',
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule, 
+    FormsModule
+  ],
   template: `
     <!-- Поле фильтрации -->
     <div class="filter-section">
@@ -25,8 +30,6 @@ import { debounceTime, distinctUntilChanged, Subject, takeUntil } from 'rxjs';
   styles: `
     .filter-section {
       position: relative;
-      top: 8px;
-      margin-bottom: 20px;
       max-width: 400px;
       min-width: 350px;
     }
@@ -63,39 +66,24 @@ import { debounceTime, distinctUntilChanged, Subject, takeUntil } from 'rxjs';
     }
   `
 })
-export class UsersFilterComponent implements OnInit {
-  @Input() searchTerm: string = '';
+export class UsersFilterComponent implements OnInit, OnDestroy {
   @Input() users: IUser[] = [];
 
-  @Output() returnFilteredUsers = new EventEmitter<IUser[]>();
+  @Output() usersFiltered = new EventEmitter<IUser[]>();
 
-  filteredUsers: IUser[] = [];
+  public searchTerm: string = '';
 
+  private filteredUsers: IUser[] = [];
   private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.setupSearchDebounce();
-  }
-
-  ngOnChange(changes: SimpleChanges): void {
-    console.log('Filter: ', changes)
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-  }
-
-  private setupSearchDebounce(): void {
-    this.searchSubject.pipe(
-      debounceTime(300),
-      distinctUntilChanged(),
-      takeUntil(this.destroy$)
-    ).subscribe(() => {
-      this.applyFilter();
-      this.returnFilteredUsers.emit(this.filteredUsers);
-    });
   }
 
   onSearchChange(): void {
@@ -105,6 +93,17 @@ export class UsersFilterComponent implements OnInit {
   clearSearch(): void {
     this.searchTerm = '';
     this.onSearchChange();
+  }
+
+  private setupSearchDebounce(): void {
+    this.searchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.applyFilter();
+      this.usersFiltered.emit(this.filteredUsers);
+    });
   }
 
   private applyFilter(): void {

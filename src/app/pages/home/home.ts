@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -6,15 +6,18 @@ import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzFlexModule } from 'ng-zorro-antd/flex';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzAlertModule } from 'ng-zorro-antd/alert';
 
 import { UsersFilterComponent } from '../../components/users-filter/users-filter';
 import { UsersTableComponent } from '../../components/users-table/users-table';
-import { UserFormModalComponent } from '../../components/user-form-modal/user-form-modal';
 import { PaginationComponent } from '../../components/pagination/pagination';
+import { ModalButtonComponent } from '../../components/modal-button/modal-button';
+import { UserFormComponent } from '../../components/user-form/user-form';
 
+import { debounceTime, distinctUntilChanged, Subject, takeUntil } from 'rxjs';
 import { UserService } from '../../services/user-service';
 import { IUser, userPattern } from '../../models/models';
-import { debounceTime, distinctUntilChanged, Subject, takeUntil } from 'rxjs';
+import { deepMerge } from '../../utils/utils';
 
 @Component({
   selector: 'home-page',
@@ -24,48 +27,78 @@ import { debounceTime, distinctUntilChanged, Subject, takeUntil } from 'rxjs';
     NzSpinModule,
     NzButtonModule,
     NzFlexModule,
+    NzAlertModule,
     UsersFilterComponent,
     PaginationComponent,
     UsersTableComponent,
-    UserFormModalComponent
+    UserFormComponent,
+    ModalButtonComponent
   ],
   template: `
     <h2>Список пользователей</h2>
+
+    <!-- 
+      Компонент фильтрации таблицы и 
+      модальное окно с формой для создания пользователя, 
+      открывающееся по кнопке "Создать пользователя"
+    -->
     <div nz-flex nzJustify="space-between" nzAlign="center">
       <users-filter
         [users]="users"
-        (returnFilteredUsers)="onFilteredUsersReceived($event)"      
+        (usersFiltered)="onFilteredUsersReceived($event)"
+        [style]="'position: relative; top: 8px; margin-bottom: 20px;'"      
       ></users-filter>
-      <button nz-button (click)="showModal()">Создать пользователя</button>
+      <modal-button
+        buttonText='Создать пользователя'
+        modalTitle='Создание пользователя'
+      >
+        <user-form
+          (userFormSubmit)="createUser($event)"
+        >
+        </user-form>
+      </modal-button>
     </div>
+
     <!-- Статистика -->
     <div class="stats">
       Найдено: {{ users.length }} пользователей
     </div>
-    @if(!loading) {
-      <users-table
-        *ngIf="users.length > 0"
-        [users]="paginatedUsers"
-      ></users-table>
-    } @else {
-      <div class="loading-state" *ngIf="!error">
-        <nz-spin nzSimple nzSize="large" />
-        <p>Загрузка пользователей...</p>
-      </div>
-    }
 
+    <!-- Таблица пользователей -->
+    <users-table
+      *ngIf="!loading && users.length > 0"
+      [users]="paginatedUsers"
+    >
+    </users-table>
+    
     <!-- Пагинация -->
     <pagination
       [users]="filteredUsers"
-      (returnPaginatedUsers)="onPaginatedUsersReceived($event)"
+      (usersPaginated)="onPaginatedUsersReceived($event)"
     ></pagination>
-    
-    <user-form-modal
-      [isVisible]="isModalVisible"
-      (closeModal)="closeModal()"
-      (submitModal)="createUser($event)"
-    >
-    </user-form-modal>
+
+    <!-- 
+      Если пользователи не найдены после применения фильтра,
+      высвятится сообщение.
+    -->
+    <div *ngIf="filteredUsers.length === 0 && !loading && !error">
+      <h3>Пользователи с таким запросом не найдены</h3>
+    </div>
+
+    <!-- Состояние загрузки пользователей -->
+    <div class="loading-state" *ngIf="loading">
+      <nz-spin nzSimple nzSize="large" />
+      <p>Загрузка пользователей...</p>
+    </div>
+
+    <!-- Обработка ошибки при загрузки пользователей -->
+    <nz-alert 
+      nzType="error" 
+      nzMessage="Ошибка" 
+      [nzDescription]="error" 
+      nzShowIcon
+      *ngIf="error"
+    />
   `,
   styles: `
     .stats {
@@ -83,31 +116,36 @@ import { debounceTime, distinctUntilChanged, Subject, takeUntil } from 'rxjs';
     }
   `
 })
-export class HomePage implements OnInit {
-  users: IUser[] = [];
-  filteredUsers: IUser[] = [];
-  paginatedUsers: IUser[] = [];
-  paginationUsers: IUser[] = [];
+export class HomePage implements OnInit, OnDestroy {
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly userService = inject(UserService);
+  private readonly message = inject(NzMessageService);
+  private destroy$ = new Subject<void>();
+
+  public users: IUser[] = [];
+  public paginatedUsers: IUser[] = [];
+  public filteredUsers: IUser[] = [];
   
-  loading: boolean = false;
-  error: string | null = null;
-
-  isModalVisible: boolean = false;
-
-  constructor(
-    private userService: UserService,
-    private cdr: ChangeDetectorRef,
-    private message: NzMessageService
-  ) {}
+  public loading: boolean = false;
+  public error: null | string = null;
 
   ngOnInit(): void {
     this.loadUsers();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   loadUsers(): void {
-    const users = this.userService.getAllUsers();
-    
-    if(this.userService.wasGetAllUsersAPIExecuted || users.length > 0) {
+    /* 
+      Проверяем, были ли получены пользователи по API.
+      Если нет, то получаем users по API, 
+      иначе достаем их из localStorage
+    */
+    if(this.userService.wasGetAllUsersAPIExecuted) {
+      const users = this.userService.getAllUsers();
       this.users = users;
       this.paginatedUsers = users.slice(0, 5);
       this.filteredUsers = users;
@@ -115,39 +153,41 @@ export class HomePage implements OnInit {
     } else {
       this.loading = true;
       this.error = null;
-
-      this.userService.getAllUsersAPI().subscribe({
-        next: (data) => {
-          localStorage.setItem('users', JSON.stringify(data));
-          this.users = data;
-          this.paginatedUsers = data.slice(0, 5);
-          this.filteredUsers = this.users;
-        },
-        error: (err) => {
-          this.error = 'Ошибка при загрузке пользователей: ' + err.message;
-          console.error(err);
-        }
-      });
+      this.userService.getAllUsersAPI()
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (usersData) => {
+            localStorage.setItem('users', JSON.stringify(usersData));
+            this.users = usersData;
+            this.paginatedUsers = usersData.slice(0, 5);
+            this.filteredUsers = usersData;
+            setTimeout(() => {
+              this.loading = false;
+              this.cdr.detectChanges()
+            }, 2000)
+          },
+          error: (err) => {
+            this.loading = false;
+            this.error = err.message;
+            console.error(err);
+            this.cdr.detectChanges();
+          }
+        });
       this.userService.wasGetAllUsersAPIExecuted = true;
-
-      setTimeout(() => {
-        this.loading = false;
-        this.cdr.detectChanges()
-      }, 2000)
     }
   }
 
-  createUser(userData: Partial<IUser>): void { // Доработать
-    const newUser = this.userService.createUser({...userPattern, ...userData});
-    if(!newUser) {
-      this.createMessage('error', 'Произошла ошибка');
-    } else {
-      this.createMessage('success', 'Пользователь создан')
-      this.users = [...this.users, newUser];
-      this.paginatedUsers = this.users.slice(0, 5);
-      this.filteredUsers = this.users;
-    }
-    this.isModalVisible = false;
+  /* 
+    Запускается каждый раз, 
+    когда прилетают данные из формы 
+    для создания пользователя 
+  */
+  createUser(userData: Partial<IUser>): void { // Добавить запрос на сервер для галочки
+    const newUser = this.userService.createUser(deepMerge(userPattern, userData));
+    this.message.create('success', 'Пользователь создан');
+    this.users = [...this.users, newUser];
+    this.paginatedUsers = this.users.slice(0, 5);
+    this.filteredUsers = this.users;
   }
 
   onPaginatedUsersReceived(users: IUser[]) {
@@ -158,17 +198,5 @@ export class HomePage implements OnInit {
   onFilteredUsersReceived(users: IUser[]){
     this.filteredUsers = users;
     this.cdr.detectChanges();
-  }
-
-  showModal(): void {
-    this.isModalVisible = true;
-  }
-
-  closeModal(): void {
-    this.isModalVisible = false;
-  }
-
-  createMessage(type: string, message: string): void {
-    this.message.create(type, `${message}`);
   }
 }

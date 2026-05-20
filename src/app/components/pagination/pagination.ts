@@ -1,14 +1,24 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
+
 import { IUser } from '../../models/models';
 
 @Component({
   selector: 'pagination',
   imports: [CommonModule],
   template: `
-    <!-- Пагинация -->
-    <div class="pagination-section">
+    <!-- 
+      Интерфейс для управления пагинацией:
+      1) Кнопка для перехода на предыдущую страницу
+      2) Информация о текущей странице и их общем количестве
+      3) Кнопка для перехода на следующую страницу
+    -->
+    <div class="pagination-section" *ngIf="totalPages > 0">
       <div class="pagination-controls">
+
+        <!--
+          1) Кнопка для перехода на предыдущую страницу
+        -->
         <button 
           (click)="previousPage()" 
           [disabled]="currentPage === 1"
@@ -16,10 +26,16 @@ import { IUser } from '../../models/models';
           ← Назад
         </button>
         
+        <!--
+          2) Информация о текущей странице и их общем количестве
+        -->
         <span class="page-info">
           Страница {{ currentPage }} из {{ totalPages }}
         </span>
         
+        <!--
+          3) Кнопка для перехода на следующую страницу
+        -->
         <button 
           (click)="nextPage()" 
           [disabled]="currentPage === totalPages"
@@ -69,18 +85,21 @@ import { IUser } from '../../models/models';
 })
 export class PaginationComponent implements OnChanges {
   @Input() users: IUser[] = [];
-  @Input() pageSize: number = 4;
-  @Input() currentPage: number = 1;
   
-  @Output() returnPaginatedUsers = new EventEmitter<IUser[]>();
-  
-  totalPages = 0;
-  paginatedUsers: IUser[] = [];
+  @Output() usersPaginated = new EventEmitter<IUser[]>();
 
-  constructor(
-    private cdr: ChangeDetectorRef
-  ) {}
+  public pageSize: number = 5; // В будущем переделать на Input()
+  public currentPage: number = 1; // Не буду управлять currentPage из компонента родителя
+  public totalPages = 0;
 
+  private paginatedUsers: IUser[] = [];
+
+  /* 
+    Как только переданный параметр users 
+    в компонент обновляется, функция производит
+    перерасчёт currentPage и в конце вызывает:
+    this.paginateUsers()
+  */
   ngOnChanges(changes: SimpleChanges): void {
     console.log('Pagination: ', changes)
     if(changes['users']) {
@@ -92,13 +111,6 @@ export class PaginationComponent implements OnChanges {
       }
       this.paginateUsers();
     }
-  }
-
-  private paginateUsers(): void {
-    const startIndex = (this.currentPage - 1) * this.pageSize;
-    const endIndex = startIndex + this.pageSize;
-    this.paginatedUsers = this.users.slice(startIndex, endIndex);
-    this.returnPaginatedUsers.emit(this.paginatedUsers);
   }
 
   nextPage(): void {
@@ -113,5 +125,18 @@ export class PaginationComponent implements OnChanges {
       this.currentPage--;
       this.paginateUsers();
     }
+  }
+
+  /* 
+    Работает с переданными 
+    в компонент пользователями и возвращает
+    необходимых пользователей из компонента
+    для отрисовки на текущей странице
+  */
+  private paginateUsers(): void {
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.paginatedUsers = this.users.slice(startIndex, endIndex);
+    this.usersPaginated.emit(this.paginatedUsers);
   }
 }

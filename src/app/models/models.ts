@@ -53,3 +53,14 @@ export const userPattern = {
     }
   }
 }
+
+export interface FrmField {
+  id: number;
+  label: string;
+  name: string;
+  controlName: string;
+  inputType: string;
+  placeholder: string;
+  required: boolean;
+  errorTip?: string;
+}

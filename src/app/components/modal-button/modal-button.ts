@@ -41,8 +41,7 @@ import { NzModalModule } from 'ng-zorro-antd/modal';
 export class ModalButtonComponent {
   @Input() buttonText: string = 'Кнопка';
   @Input() modalTitle: string = 'Заголовок модального окна';
-
-  public isVisible: boolean = false;
+  @Input() isVisible: boolean = false;
 
   openModal(): void {
     this.isVisible = true;

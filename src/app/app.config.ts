@@ -14,9 +14,9 @@ const ngZorroConfig: NzConfig = {
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideHttpClient(withFetch()),
-    provideNzConfig(ngZorroConfig),
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes)
+    provideHttpClient(withFetch()),
+    provideRouter(routes),
+    provideNzConfig(ngZorroConfig)
   ]
 };

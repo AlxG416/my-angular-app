@@ -1,10 +1,5 @@
 import { DeepPartial } from "../models/models";
 
-export function isEmptyObject(obj: any) {
-    return obj && typeof obj === 'object' && !Array.isArray(obj) 
-        && Object.keys(obj).length === 0;
-}
-
 export function deepMerge<T extends object>(target: T, source: DeepPartial<T>): T {
   const result = { ...target };
   for (const key in source) {

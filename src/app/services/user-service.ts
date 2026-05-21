@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { catchError, map, retry, timeout } from 'rxjs/operators';
 
 import { DeepPartialIUser, IUser } from '../models/models';
@@ -12,21 +12,24 @@ import { deepMerge } from '../utils/utils';
 })
 export class UserService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'https://jsonplaceholder.typicode.com/users';
-  private readonly storageKey = 'users';
+  private readonly apiUrl: string = 'https://jsonplaceholder.typicode.com/users';
+  private readonly storageKey: string = 'users';
 
-  wasGetAllUsersAPIExecuted: boolean = false; // Плохое решение для котроля первой подгрузки пользователей, упираемся в ограничения работы placeholder api. 
+  /* 
+    Плохое решение для контроля первой подгрузки пользователей, 
+    упираемся в ограничения работы с placeholder API. 
+  */
+  public wasGetAllUsersAPIExecuted: boolean = false;
 
-  private readonly defaultTimeout = 10000;
-  private readonly maxRetries = 2;
+  private readonly defaultTimeout: number = 10000;
+  private readonly maxRetries: number = 2;
 
   getAllUsersAPI(): Observable<IUser[]> {
-    return this.http.get<IUser[]>(this.apiUrl)
-    .pipe(
+    return this.http.get<IUser[]>(this.apiUrl).pipe(
       timeout(this.defaultTimeout),
       retry(this.maxRetries),
       map(users => this.transformUsers(users)),
-      catchError(this.handleError<IUser[]>('getAllUsersAPI', []))
+      catchError(this.handleError<IUser[]>('getAllUsersAPI'))
     );
   }
 
@@ -42,11 +45,11 @@ export class UserService {
     return users.map(user => this.transformUser(user));
   }
 
-  private handleError<T>(operation = 'operation', result?: T) {
+  private handleError<T>(operation = 'operation') {
     return (error: any): Observable<T> => {
       console.error(`${operation} failed:`, error);
       
-      let errorMessage = 'Произошла ошибка';
+      let errorMessage: string = '';
       
       if (error.error instanceof ErrorEvent) {
         errorMessage = `Ошибка на клиенте: ${error.error.message}`;
@@ -76,7 +79,7 @@ export class UserService {
 
     const newId = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
 
-    const newUser = {
+    const newUser: IUser = {
       ...userData,
       id: newId
     };

@@ -14,7 +14,7 @@ import { PaginationComponent } from '../../components/pagination/pagination';
 import { ModalButtonComponent } from '../../components/modal-button/modal-button';
 import { UserFormComponent } from '../../components/user-form/user-form';
 
-import { debounceTime, distinctUntilChanged, Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { UserService } from '../../services/user-service';
 import { IUser, userPattern } from '../../models/models';
 import { deepMerge } from '../../utils/utils';
@@ -81,8 +81,16 @@ import { deepMerge } from '../../utils/utils';
       Если пользователи не найдены после применения фильтра,
       высвятится сообщение.
     -->
-    <div *ngIf="filteredUsers.length === 0 && !loading && !error">
+    <div *ngIf="filteredUsers.length === 0 && users.length > 0 && !loading && !error">
       <h3>Пользователи с таким запросом не найдены</h3>
+    </div>
+
+    <!-- 
+      Если таблица с пользователя пустая,
+      высвятится сообщение.
+    -->
+    <div *ngIf="users.length === 0 && !loading && !error">
+      <h3>В таблице нет ни одного пользователя</h3>
     </div>
 
     <!-- Состояние загрузки пользователей -->
@@ -120,6 +128,7 @@ export class HomePage implements OnInit, OnDestroy {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly userService = inject(UserService);
   private readonly message = inject(NzMessageService);
+  
   private destroy$ = new Subject<void>();
 
   public users: IUser[] = [];
@@ -144,6 +153,7 @@ export class HomePage implements OnInit, OnDestroy {
       Если нет, то получаем users по API, 
       иначе достаем их из localStorage
     */
+    console.log('was api executed? ', this.userService.wasGetAllUsersAPIExecuted);
     if(this.userService.wasGetAllUsersAPIExecuted) {
       const users = this.userService.getAllUsers();
       this.users = users;

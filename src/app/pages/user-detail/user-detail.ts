@@ -16,8 +16,6 @@ import { UserInfoComponent } from '../../components/user-info/user-info';
 import { UserService } from '../../services/user-service';
 import { IUser } from '../../models/models';
 
-import { NzDemoFormAutoTipsComponent } from '../../components/hz-form/hz-form';
-
 @Component({
   selector: 'user-detail-page',
   imports: [
@@ -30,20 +28,20 @@ import { NzDemoFormAutoTipsComponent } from '../../components/hz-form/hz-form';
     NzAlertModule,
     UserInfoComponent,
     UserFormComponent,
-    ModalButtonComponent,
-    NzDemoFormAutoTipsComponent
+    ModalButtonComponent
   ],
   template: `
     <!-- Кнопка для возвращения на главную страницу -->
     <button nz-button nzType="link" routerLink="/users">← Вернуться назад</button>
 
-    <!--
-      Компонент модального окна с формой 
-      для редактирования пользователя, 
-      открывающегося по кнопке "Создать пользователя"
-    -->
     <div *ngIf="!loading && user !== null">
         <div nz-space nzSize="small" style="margin-bottom: 10px;">
+
+          <!--
+            Компонент модального окна с формой 
+            для редактирования пользователя, 
+            открывающегося по кнопке "Создать пользователя"
+          -->
           <modal-button
             buttonText="Редактировать"
             modalTitle="Редактирование пользователя"
@@ -54,8 +52,16 @@ import { NzDemoFormAutoTipsComponent } from '../../components/hz-form/hz-form';
             >
             </user-form>
           </modal-button>
+
+          <!--
+            Кнопка для удаления пользователя
+          -->
           <button nz-button nzType="primary" nzDanger (click)="deleteUser(user.id)">Удалить</button>
         </div>
+
+        <!--
+          Вся информация о выбранном пользователе
+        -->
         <user-info [user]="user"></user-info>
     </div>
   
@@ -75,7 +81,6 @@ import { NzDemoFormAutoTipsComponent } from '../../components/hz-form/hz-form';
       nzShowIcon
       *ngIf="error"
     />
-    <nz-demo-form-auto-tips />
   `,
   styles: ``
 })
@@ -112,6 +117,7 @@ export class UserDetailPage implements OnInit {
     try {
       const userId = Number(this.route.snapshot.paramMap.get('id'));
       const user = this.userService.updateUser(userId, userData);
+      console.log('Обновлённый пользователь: ', user)
       this.user = user;
       this.message.create('success', 'Информация о пользователе обновлена');
     } catch (error) {

@@ -8,7 +8,7 @@ import { NzFlexModule } from 'ng-zorro-antd/flex';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 
-import { IUser } from '../../models/models';
+import { FrmField, IUser } from '../../models/models';
 
 @Component({
   selector: 'user-form',
@@ -50,7 +50,10 @@ import { IUser } from '../../models/models';
                   >
                     {{field.label}}
                   </nz-form-label>
-                  <nz-form-control [nzSpan]="12">
+                  <nz-form-control 
+                    [nzSpan]="12"
+                    [nzErrorTip]="field.errorTip || ''"
+                  >
                     <input
                       [id]="field.name"
                       nz-input
@@ -73,7 +76,7 @@ import { IUser } from '../../models/models';
       -->
       <div nz-flex nzJustify='flex-end'>
         <div nz-space nzSize='small'>
-          <button nz-button nzType="primary" (click)="resetForm()">Сбросить форму</button>
+          <button nz-button nzType="primary" (click)="resetForm()" type="button">Сбросить форму</button>
           <button nz-button nzType="primary" (click)="submitForm()">{{user ? 'Сохранить' : 'Создать'}}</button>
         </div>
       </div>
@@ -103,7 +106,7 @@ export class UserFormComponent implements OnChanges {
     contacts: this.fb.group({
       name: ['', Validators.required],
       username: ['', Validators.required],
-      email: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
       phone: [''],
       website: [''],
     }),
@@ -124,7 +127,7 @@ export class UserFormComponent implements OnChanges {
     }),
   });
 
-  public contactFields = [
+  public contactFields: FrmField[] = [
     {
       id: 1,
       label: "Полное имя",
@@ -132,7 +135,8 @@ export class UserFormComponent implements OnChanges {
       controlName: "name",
       inputType: "text",
       placeholder: "Введите полное имя",
-      required: true
+      required: true,
+      errorTip: "Введите своё полное имя!"
     },
     {
       id: 2,
@@ -141,7 +145,8 @@ export class UserFormComponent implements OnChanges {
       controlName: "username",
       inputType: "text",
       placeholder: "Введите имя пользователя",
-      required: true
+      required: true,
+      errorTip: "Введите своё имя пользователя!"
     },
     {
       id: 3,
@@ -150,7 +155,8 @@ export class UserFormComponent implements OnChanges {
       controlName: "email",
       inputType: "email",
       placeholder: "Введите почту",
-      required: true
+      required: true,
+      errorTip: "Введите свою почту!"
     },
     {
       id: 4,
@@ -159,7 +165,8 @@ export class UserFormComponent implements OnChanges {
       controlName: "phone",
       inputType: "tel",
       placeholder: "Введите номер телефона",
-      required: false
+      required: false,
+      errorTip: ""
     },
     {
       id: 5,
@@ -168,11 +175,12 @@ export class UserFormComponent implements OnChanges {
       controlName: "website",
       inputType: "text",
       placeholder: "Введите название сайта",
-      required: false
+      required: false,
+      errorTip: ""
     }
   ];
 
-  public companyFields = [
+  public companyFields: FrmField[] = [
     {
       id: 1,
       label: "Название",
@@ -202,7 +210,7 @@ export class UserFormComponent implements OnChanges {
     }
   ];
 
-  public addressFields = [
+  public addressFields: FrmField[] = [
     {
       id: 1,
       label: "Улица",
@@ -279,33 +287,44 @@ export class UserFormComponent implements OnChanges {
   }
 
   submitForm() {
-    const formValue = this.userForm.value;
+    if(this.userForm.valid) {
+      const formValue = this.userForm.value;
 
-    const userData: Omit<IUser, 'id' | 'createdAt' | 'updatedAt'> = {
-      name: formValue.contacts && formValue.contacts.name || '',
-      username: formValue.contacts && formValue.contacts.username || '',
-      email: formValue.contacts && formValue.contacts.email || '',
-      phone: formValue.contacts && formValue.contacts.phone || '',
-      website: formValue.contacts && formValue.contacts.website || '',
-      company: formValue.company ? {
-        name: formValue.company.name || '',
-        catchPhrase: formValue.company.catchPhrase || '',
-        bs: formValue.company.bs || ''
-      } : undefined,
-      address: formValue.address ? {
-        street: formValue.address.street || '',
-        suite: formValue.address.suite || '',
-        city: formValue.address.city || '',
-        zipcode: formValue.address.zipcode || '',
-        geo: formValue.address.geo ? {
-          lat: formValue.address.geo.lat || '',
-          lng: formValue.address.geo.lng || ''
+      const userData: Omit<IUser, 'id' | 'createdAt' | 'updatedAt'> = {
+        name: formValue.contacts && formValue.contacts.name || '',
+        username: formValue.contacts && formValue.contacts.username || '',
+        email: formValue.contacts && formValue.contacts.email || '',
+        phone: formValue.contacts && formValue.contacts.phone || '',
+        website: formValue.contacts && formValue.contacts.website || '',
+        company: formValue.company ? {
+          name: formValue.company.name || '',
+          catchPhrase: formValue.company.catchPhrase || '',
+          bs: formValue.company.bs || ''
+        } : undefined,
+        address: formValue.address ? {
+          street: formValue.address.street || '',
+          suite: formValue.address.suite || '',
+          city: formValue.address.city || '',
+          zipcode: formValue.address.zipcode || '',
+          geo: formValue.address.geo ? {
+            lat: formValue.address.geo.lat || '',
+            lng: formValue.address.geo.lng || ''
+          } : undefined
         } : undefined
-      } : undefined
-    };
-    
-    this.userFormSubmit.emit(userData);
-    this.userForm.reset();
+      };
+
+      this.userFormSubmit.emit(userData);
+      this.userForm.reset();
+    } else {
+      console.log(this.userForm.controls)
+      Object.values(this.userForm.controls.contacts.controls).forEach(control => {
+        if(control.invalid) {
+          console.log('dirty')
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        } 
+      });
+    }
   }
 
   resetForm() {

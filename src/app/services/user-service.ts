@@ -33,6 +33,38 @@ export class UserService {
     );
   }
 
+  getUserByIdAPI(id: number): Observable<IUser> {
+    return this.http.get<IUser>(this.apiUrl + `/${id}`).pipe(
+      timeout(this.defaultTimeout),
+      retry(this.maxRetries),
+      catchError(this.handleError<IUser>('getUserByIdAPI'))
+    );
+  }
+
+  updateUserAPI(user: Partial<IUser>): Observable<IUser> {
+    return this.http.put<IUser>(this.apiUrl + `/${user.id}`, user).pipe(
+      timeout(this.defaultTimeout),
+      retry(this.maxRetries),
+      catchError(this.handleError<IUser>('updateUserAPI'))
+    );
+  }
+
+  deleteUserAPI(id: number): Observable<object> {
+    return this.http.delete<object>(this.apiUrl + `/${id}`).pipe(
+      timeout(this.defaultTimeout),
+      retry(this.maxRetries),
+      catchError(this.handleError<object>('updateUserAPI'))
+    );
+  }
+
+  createUserAPI(userData: any): Observable<IUser> {
+    return this.http.post<IUser>(this.apiUrl, userData).pipe(
+      timeout(this.defaultTimeout),
+      retry(this.maxRetries),
+      catchError(this.handleError<IUser>('createUserAPI'))
+    );
+  }
+
   private transformUser(user: any): IUser {
     return {
       ...user,

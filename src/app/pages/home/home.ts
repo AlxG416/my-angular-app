@@ -191,12 +191,26 @@ export class HomePage implements OnInit, OnDestroy {
     когда прилетают данные из формы 
     для создания пользователя 
   */
-  createUser(userData: Partial<IUser>): void { // Добавить запрос на сервер для галочки
-    const newUser = this.userService.createUser(deepMerge(userPattern, userData));
-    this.message.create('success', 'Пользователь создан');
-    this.users = [...this.users, newUser];
-    this.paginatedUsers = this.users.slice(0, 5);
-    this.filteredUsers = this.users;
+  createUser(userData: Partial<IUser>): void {
+    this.error = null;
+    this.userService.createUserAPI(userData)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (userData) => {
+          if(userData) {
+            const newUser = this.userService.createUser(deepMerge(userPattern, userData));
+            this.message.create('success', 'Пользователь создан');
+            this.users = [...this.users, newUser];
+            this.paginatedUsers = this.users.slice(0, 5);
+            this.filteredUsers = this.users;
+          }
+        },
+        error: (err) => {
+          this.error = err.message;
+          console.error(err);
+          this.cdr.detectChanges();
+        }
+      });
   }
 
   onPaginatedUsersReceived(users: IUser[]) {

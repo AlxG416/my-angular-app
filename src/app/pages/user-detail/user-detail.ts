@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 
@@ -13,6 +13,7 @@ import { UserFormComponent } from '../../components/user-form/user-form';
 import { ModalButtonComponent } from '../../components/modal-button/modal-button';
 import { UserInfoComponent } from '../../components/user-info/user-info';
 
+import { Subject, takeUntil } from 'rxjs';
 import { UserService } from '../../services/user-service';
 import { IUser } from '../../models/models';
 
@@ -84,12 +85,14 @@ import { IUser } from '../../models/models';
   `,
   styles: ``
 })
-export class UserDetailPage implements OnInit {
+export class UserDetailPage implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly userService = inject(UserService);
   private readonly message = inject(NzMessageService);
+
+  private destroy$ = new Subject<void>();
 
   public user: null | IUser = null;
 
@@ -100,7 +103,12 @@ export class UserDetailPage implements OnInit {
     this.loadUser();
   }
 
-  loadUser(): void {
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  loadUser(): void { // Добавить запрос на сервер для галочки
     this.loading = true;
     this.error = null;
     const userId = Number(this.route.snapshot.paramMap.get('id'));

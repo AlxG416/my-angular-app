@@ -101,7 +101,6 @@ export class PaginationComponent implements OnChanges {
     this.paginateUsers()
   */
   ngOnChanges(changes: SimpleChanges): void {
-    console.log('Pagination: ', changes)
     if(changes['users']) {
       this.totalPages = Math.ceil(this.users.length / this.pageSize);
       if (this.currentPage > this.totalPages && this.totalPages > 0) {

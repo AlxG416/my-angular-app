@@ -108,7 +108,12 @@ export class UserDetailPage implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  loadUser(): void { // Добавить запрос на сервер для галочки
+  /*
+    Я не добавляю запрос на jsonplaceholder,
+    ибо после удаления пользователя, результат
+    операции не отразится на его последующей загрузке
+  */
+  loadUser(): void { 
     this.loading = true;
     this.error = null;
     const userId = Number(this.route.snapshot.paramMap.get('id'));
@@ -121,11 +126,15 @@ export class UserDetailPage implements OnInit, OnDestroy {
     }, 1000);
   }
 
-  updateUser(userData: Partial<IUser>): void { // Добавить запрос на сервер для галочки
+  /*
+    Я не добавляю запрос на jsonplaceholder,
+    ибо после обновления пользователя, результат
+    операции не отразится на его последующей загрузке
+  */
+  updateUser(userData: Partial<IUser>): void {
     try {
       const userId = Number(this.route.snapshot.paramMap.get('id'));
       const user = this.userService.updateUser(userId, userData);
-      console.log('Обновлённый пользователь: ', user)
       this.user = user;
       this.message.create('success', 'Информация о пользователе обновлена');
     } catch (error) {
@@ -133,7 +142,12 @@ export class UserDetailPage implements OnInit, OnDestroy {
     }
   }
 
-  deleteUser(id: number): void { // Добавить запрос на сервер для галочки
+  /*
+    Я не добавляю запрос на jsonplaceholder,
+    ибо после удаления пользователя, результат
+    операции не отразится на его последующей загрузке
+  */
+  deleteUser(id: number): void {
     try {
       this.userService.deleteUser(id);
       this.message.create('success', 'Пользователь удалён');

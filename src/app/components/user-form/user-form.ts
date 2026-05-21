@@ -316,10 +316,8 @@ export class UserFormComponent implements OnChanges {
       this.userFormSubmit.emit(userData);
       this.userForm.reset();
     } else {
-      console.log(this.userForm.controls)
       Object.values(this.userForm.controls.contacts.controls).forEach(control => {
         if(control.invalid) {
-          console.log('dirty')
           control.markAsDirty();
           control.updateValueAndValidity({ onlySelf: true });
         } 

@@ -203,6 +203,7 @@ export class HomePage implements OnInit, OnDestroy {
             this.users = [...this.users, newUser];
             this.paginatedUsers = this.users.slice(0, 5);
             this.filteredUsers = this.users;
+            this.cdr.detectChanges();
           }
         },
         error: (err) => {

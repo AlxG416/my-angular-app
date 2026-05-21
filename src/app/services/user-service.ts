@@ -24,6 +24,9 @@ export class UserService {
   private readonly defaultTimeout: number = 10000;
   private readonly maxRetries: number = 2;
 
+  /*
+    Методы с API на конце используются для запросов к серверу jsonplaceholder
+  */
   getAllUsersAPI(): Observable<IUser[]> {
     return this.http.get<IUser[]>(this.apiUrl).pipe(
       timeout(this.defaultTimeout),
@@ -33,11 +36,12 @@ export class UserService {
     );
   }
 
-  getUserByIdAPI(id: number): Observable<IUser> {
-    return this.http.get<IUser>(this.apiUrl + `/${id}`).pipe(
+  // Record<string, never> означает, что API может вернуть пустой объект
+  getUserByIdAPI(id: number): Observable<IUser | Record<string, never>> {
+    return this.http.get<IUser | Record<string, never>>(this.apiUrl + `/${id}`).pipe(
       timeout(this.defaultTimeout),
       retry(this.maxRetries),
-      catchError(this.handleError<IUser>('getUserByIdAPI'))
+      catchError(this.handleError<IUser | Record<string, never>>('getUserByIdAPI'))
     );
   }
 
@@ -49,15 +53,15 @@ export class UserService {
     );
   }
 
-  deleteUserAPI(id: number): Observable<object> {
-    return this.http.delete<object>(this.apiUrl + `/${id}`).pipe(
+  deleteUserAPI(id: number): Observable<Record<string, never>> {
+    return this.http.delete<Record<string, never>>(this.apiUrl + `/${id}`).pipe(
       timeout(this.defaultTimeout),
       retry(this.maxRetries),
-      catchError(this.handleError<object>('updateUserAPI'))
+      catchError(this.handleError<Record<string, never>>('deleteUserAPI'))
     );
   }
 
-  createUserAPI(userData: any): Observable<IUser> {
+  createUserAPI(userData: Partial<IUser>): Observable<IUser> {
     return this.http.post<IUser>(this.apiUrl, userData).pipe(
       timeout(this.defaultTimeout),
       retry(this.maxRetries),
@@ -95,6 +99,9 @@ export class UserService {
     };
   }
 
+  /* 
+    Далее идут методы для работы с localStorage
+  */
   getAllUsers(): IUser[] {
     const usersStorage = localStorage.getItem(this.storageKey);
     if(!usersStorage) return [];

@@ -72,9 +72,6 @@
         },
         "deploy": {
           "builder": "angular-cli-ghpages:deploy",
-          "options": {
-            "baseHref": "https://alxg416.github.io/my-angular-app/"
-          }
         }
       }
     }

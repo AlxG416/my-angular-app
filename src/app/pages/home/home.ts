@@ -153,7 +153,6 @@ export class HomePage implements OnInit, OnDestroy {
       Если нет, то получаем users по API, 
       иначе достаем их из localStorage
     */
-    console.log('was api executed? ', this.userService.wasGetAllUsersAPIExecuted);
     if(this.userService.wasGetAllUsersAPIExecuted) {
       const users = this.userService.getAllUsers();
       this.users = users;

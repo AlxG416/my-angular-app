@@ -128,7 +128,7 @@ export class UserDetailPage implements OnInit, OnDestroy {
 
   /*
     Я не добавляю запрос на jsonplaceholder,
-    ибо после обновления пользователя, результат
+    ибо после обновления пользователя результат
     операции не отразится на его последующей загрузке
   */
   updateUser(userData: Partial<IUser>): void {
@@ -144,7 +144,7 @@ export class UserDetailPage implements OnInit, OnDestroy {
 
   /*
     Я не добавляю запрос на jsonplaceholder,
-    ибо после удаления пользователя, результат
+    ибо после удаления пользователя результат
     операции не отразится на его последующей загрузке
   */
   deleteUser(id: number): void {

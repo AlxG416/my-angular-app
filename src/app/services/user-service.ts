@@ -25,7 +25,7 @@ export class UserService {
   private readonly maxRetries: number = 2;
 
   /*
-    Методы с API на конце используются для запросов к серверу jsonplaceholder
+    Методы класса с API на конце используются для запросов к серверу jsonplaceholder
   */
   getAllUsersAPI(): Observable<IUser[]> {
     return this.http.get<IUser[]>(this.apiUrl).pipe(

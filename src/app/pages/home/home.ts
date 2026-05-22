@@ -86,7 +86,7 @@ import { deepMerge } from '../../utils/utils';
     </div>
 
     <!-- 
-      Если таблица с пользователя пустая,
+      Если таблица с пользователями пустая,
       высвятится сообщение.
     -->
     <div *ngIf="users.length === 0 && !loading && !error">
@@ -150,7 +150,7 @@ export class HomePage implements OnInit, OnDestroy {
   loadUsers(): void {
     /* 
       Проверяем, были ли получены пользователи по API.
-      Если нет, то получаем users по API, 
+      Если нет — то получаем users по API, 
       иначе достаем их из localStorage
     */
     if(this.userService.wasGetAllUsersAPIExecuted) {

@@ -95,9 +95,9 @@ export class PaginationComponent implements OnChanges {
   private paginatedUsers: IUser[] = [];
 
   /* 
-    Как только переданный параметр users 
-    в компонент обновляется, функция производит
-    перерасчёт currentPage и в конце вызывает:
+    Как только обновляется переданный параметр users 
+    в компонент, функция производит
+    перерасчёт currentPage и в конце вызывает
     this.paginateUsers()
   */
   ngOnChanges(changes: SimpleChanges): void {

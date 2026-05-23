@@ -11,7 +11,7 @@
 Для запуска приложения необходимо сделать копию репозитория:
 
 ```bash
-clone https://github.com/AlxG416/my-angular-app.git
+git clone https://github.com/AlxG416/my-angular-app.git
 ```
 
 Перейдя в терминале в папку с проектом, выполнить пару команд:
